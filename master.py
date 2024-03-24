@@ -5,7 +5,6 @@ import getpass
 import os
 import binascii
 
-# Настройка логирования
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
@@ -43,7 +42,6 @@ class QuizGame:
             logging.error(f"Error adding question: {e}")
 
     def register_user(self, username, password):
-        # Валидация имени пользователя и пароля
         if not username or not password:
             logging.error("Username or password cannot be empty.")
             return False
@@ -52,11 +50,14 @@ class QuizGame:
                 "Username must be at least 3 characters long, and password must be at least 8 characters long."
             )
             return False
-        # Хеширование пароля с солью
+        if not username.isalnum() or not password.isalnum():
+            logging.error(
+                "Username and password must contain only alphanumeric characters."
+            )
+            return False
         salt = hashlib.sha256(os.urandom(60)).hexdigest().encode("ascii")
         pwdhash = hashlib.pbkdf2_hmac("sha512", password.encode("utf-8"), salt, 100000)
         pwdhash = binascii.hexlify(pwdhash)
-        # Сохранение пользователя
         try:
             self.cursor.execute(
                 "INSERT INTO users (username, password) VALUES (?, ?)",
