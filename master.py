@@ -136,6 +136,9 @@ if __name__ == "__main__":
         game.add_question("What does GPU stand for? ", "graphics processing unit")
         game.add_question("What does RAM stand for? ", "random access memory")
         game.add_question("What does PSU stand for? ", "power supply")
+        game.add_question("What does SSD stand for? ", "solid state drive")
+        game.add_question("What does HDD stand for? ", "hard disk drive")
+        game.add_question("What does USB stand for? ", "universal serial bus")
 
         username = input("Enter your username: ")
         password = getpass.getpass("Enter your password: ")
