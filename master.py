@@ -112,7 +112,7 @@ class QuizGame:
 
     def play(self, username):
         """Runs the quiz game, asking each stored question and recording the user's score."""
-        print("Welcome to my computer quiz!")
+        print("Welcome to Digital_Odyssey!")
         self.cursor.execute("SELECT question, answer FROM questions")
         questions = self.cursor.fetchall()
         score = sum(
