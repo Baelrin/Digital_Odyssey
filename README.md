@@ -1,4 +1,4 @@
-# Quiz Game
+# Digital_Odyssey
 
 This project is a simple quiz game implemented in Python. It uses a SQLite database to store questions, answers, and user scores. The game is designed to be interactive, allowing users to register, log in, and participate in a quiz.
 
