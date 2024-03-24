@@ -1,9 +1,9 @@
-import sqlite3
+import binascii
+import getpass
 import hashlib
 import logging
-import getpass
 import os
-import binascii
+import sqlite3
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
