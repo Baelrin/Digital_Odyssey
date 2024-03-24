@@ -1,5 +1,14 @@
 import sqlite3
 import hashlib
+import logging
+import getpass
+import os
+import binascii
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 class QuizGame:
@@ -24,29 +33,62 @@ class QuizGame:
         self.conn.commit()
 
     def add_question(self, question, answer):
-        self.cursor.execute(
-            "INSERT INTO questions (question, answer) VALUES (?, ?)", (question, answer)
-        )
-        self.conn.commit()
+        try:
+            self.cursor.execute(
+                "INSERT INTO questions (question, answer) VALUES (?, ?)",
+                (question, answer),
+            )
+            self.conn.commit()
+        except sqlite3.Error as e:
+            logging.error(f"Error adding question: {e}")
 
     def register_user(self, username, password):
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        # Валидация имени пользователя и пароля
+        if not username or not password:
+            logging.error("Username or password cannot be empty.")
+            return False
+        if len(username) < 3 or len(password) < 8:
+            logging.error(
+                "Username must be at least 3 characters long, and password must be at least 8 characters long."
+            )
+            return False
+        # Хеширование пароля с солью
+        salt = hashlib.sha256(os.urandom(60)).hexdigest().encode("ascii")
+        pwdhash = hashlib.pbkdf2_hmac("sha512", password.encode("utf-8"), salt, 100000)
+        pwdhash = binascii.hexlify(pwdhash)
+        # Сохранение пользователя
         try:
             self.cursor.execute(
                 "INSERT INTO users (username, password) VALUES (?, ?)",
-                (username, hashed_password),
+                (username, (salt + pwdhash).decode("ascii")),
             )
             self.conn.commit()
+            return True
         except sqlite3.IntegrityError:
-            print("Username already exists. Please choose a different username.")
+            logging.error(
+                "Username already exists. Please choose a different username."
+            )
+            return False
 
     def login_user(self, username, password):
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
-        self.cursor.execute(
-            "SELECT * FROM users WHERE username=? AND password=?",
-            (username, hashed_password),
-        )
-        return self.cursor.fetchone() is not None
+        try:
+            self.cursor.execute(
+                "SELECT * FROM users WHERE username=?",
+                (username,),
+            )
+            if user := self.cursor.fetchone():
+                salt = user[1][:64]
+                stored_password = user[1][64:]
+                pwdhash = hashlib.pbkdf2_hmac(
+                    "sha512", password.encode("utf-8"), salt.encode("ascii"), 100000
+                )
+                pwdhash = binascii.hexlify(pwdhash).decode("ascii")
+                return pwdhash == stored_password
+            else:
+                return False
+        except sqlite3.Error as e:
+            logging.error(f"Error logging in user: {e}")
+            return False
 
     def ask_question(self, question, correct_answer):
         user_answer = input(question).lower().strip()
@@ -83,7 +125,7 @@ if __name__ == "__main__":
         game.add_question("What does PSU stand for? ", "power supply")
 
         username = input("Enter your username: ")
-        password = input("Enter your password: ")
+        password = getpass.getpass("Enter your password: ")
         if not game.login_user(username, password):
             print("User not found. Registering new user.")
             game.register_user(username, password)
